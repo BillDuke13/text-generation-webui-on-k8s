@@ -1,0 +1,54 @@
+piVersion: apps/v1
+kind: Deployment
+metadata:
+  name: text-generation-webui
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: text-generation-webui
+  template:
+    metadata:
+      labels:
+        app: text-generation-webui
+    spec:
+      volumes:
+        - name: models
+          persistentVolumeClaim:
+            claimName: models
+        - name: characters
+          persistentVolumeClaim:
+            claimName: characters
+      initContainers:
+        - name: init-models
+          image: {{ .Values.image.initContainer }}
+          command:
+            - chown
+            - '-R'
+            - '1000:1000'
+            - /app/text-generation-webui/models/
+            - /characters
+          resources: {}
+          volumeMounts:
+            - name: models
+              mountPath: /app/text-generation-webui/models/
+            - name: characters
+              mountPath: /characters
+      containers:
+        - name: text-generation-webui
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          command:
+            - /bin/bash
+          resources:
+            limits:
+              nvidia.com/gpu: '1'
+          volumeMounts:
+            - name: models
+              mountPath: /app/text-generation-webui/models/
+            - name: characters
+              mountPath: /characters
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+  strategy:
+    type: Recreate
