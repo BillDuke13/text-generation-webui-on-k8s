@@ -1,0 +1,15 @@
+replicaCount: 1
+
+image:
+  initContainer: alpine:3.17.3
+  repository: ghcr.io/billduke13/text-generation-webui
+  tag: main
+
+pvc:
+  characters:
+    storage: 80Gi
+  models:
+    storage: 150Gi
+
+service:
+  type: NodePort
